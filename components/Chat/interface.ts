@@ -15,8 +15,25 @@ export interface Persona {
 
 export interface Chat {
   id: string
-  persona?: Persona
-  messages?: ChatMessage[]
+  conversationId?: string
+  name?: string
+  messages: ChatMessage[]
+}
+
+export interface SearchResult {
+  id: number
+  text: string
+  score: number
+}
+
+export interface OpenSearchConversation {
+  conversation_id: string,
+  name: string
+}
+
+export interface OpenSearchInteraction {
+  input: string,
+  response: string
 }
 
 export type ChatRole = 'assistant' | 'user' | 'system'

@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation'
 import { FaAdjust, FaGithub, FaMoon, FaRegSun } from 'react-icons/fa'
 import { Link } from './Link'
 import { useTheme } from './Themes'
+import { SiOracle } from 'react-icons/si'
 
 export interface HeaderProps {
   children?: React.ReactNode
@@ -32,27 +33,20 @@ export const Header = ({ children, gitHubLink, ghost }: HeaderProps) => {
     >
       <Flex align="center" gap="3">
         <NextLink href="/">
-          <Heading as="h2" size="3" style={{ maxWidth: 200 }}>
-            ChatGPT Lite
-          </Heading>
+          <Flex gap="1">
+            <SiOracle className="size-6" color="red" />
+            <Heading as="h2" size="3" style={{ maxWidth: 200 }}>
+              Oracle OpenSearch
+            </Heading>
+          </Flex>
         </NextLink>
         <Flex align="center" gap="3" className="ml-auto">
-          <Avatar
-            color="gray"
-            size="2"
-            radius="full"
-            fallback={
-              <Link href="https://github.com/blrchen/chatgpt-lite">
-                <FaGithub />
-              </Link>
-            }
-          />
           <Select.Root value={theme} onValueChange={setTheme}>
             <Select.Trigger radius="full" />
             <Select.Content>
-              <Select.Item value="light">
+              {/* <Select.Item value="light">
                 <FaRegSun />
-              </Select.Item>
+              </Select.Item> */}
               <Select.Item value="dark">
                 <FaMoon />
               </Select.Item>

@@ -2,7 +2,7 @@
 
 import { Avatar, Flex } from '@radix-ui/themes'
 import { HiUser } from 'react-icons/hi'
-import { SiOpenai } from 'react-icons/si'
+import { SiOpensearch, SiOracle } from 'react-icons/si'
 import { Markdown } from '@/components'
 import { ChatMessage } from './interface'
 
@@ -17,12 +17,12 @@ const Message = (props: MessageProps) => {
   return (
     <Flex gap="4" className="mb-5">
       <Avatar
-        fallback={isUser ? <HiUser className="h-4 w-4" /> : <SiOpenai className="h-4 w-4" />}
-        color={isUser ? undefined : 'green'}
+        fallback={isUser ? <HiUser className="h-4 w-4" /> : <SiOracle className="h-4 w-4" />}
+        color={isUser ? undefined : 'red'}
         size="2"
         radius="full"
       />
-      <div className="flex-1 pt-1 break-all">
+      <div className="flex-1 pt-1 text-pretty">
         {isUser ? (
           <div
             className="userMessage"

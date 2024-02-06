@@ -13,26 +13,27 @@ import './index.scss'
 
 export const ChatSideBar = () => {
   const {
-    currentChatRef,
+    currentChat,
     chatList,
     DefaultPersonas,
     toggleSidebar,
     onDeleteChat,
     onChangeChat,
-    onCreateChat,
-    onOpenPersonaPanel
+    onStartChat,
   } = useContext(ChatContext)
+
+  console.log(chatList);
 
   return (
     <Flex direction="column" className={cs('chart-side-bar', { show: toggleSidebar })}>
       <Flex className="p-2 h-full overflow-hidden w-64" direction="column" gap="3">
         <Box
           width="auto"
-          onClick={() => onCreateChat?.(DefaultPersonas[0])}
+          onClick={() => onStartChat?.()}
           className="bg-token-surface-primary active:scale-95 "
         >
           <FiPlus className="h-4 w-4" />
-          <Text>New Chat</Text>
+          <Text>Start Chat</Text>
         </Box>
         <ScrollArea className="flex-1" type="auto" scrollbars="vertical">
           <Flex direction="column" gap="3">
@@ -41,17 +42,17 @@ export const ChatSideBar = () => {
                 key={chat.id}
                 width="auto"
                 className={cs('bg-token-surface active:scale-95 truncate', {
-                  active: currentChatRef?.current?.id === chat.id
+                  active: currentChat?.id === chat.id
                 })}
                 onClick={() => onChangeChat?.(chat)}
               >
                 <Flex gap="2" align="center">
                   <BiMessageDetail className="h-4 w-4" />
-                  <Text as="p" className="truncate">
-                    {chat.persona?.name}
+                  <Text as="p" className="max-w-36 truncate hover:text-clip">
+                    {chat.name}
                   </Text>
                 </Flex>
-                <IconButton
+                {chatList.length > 1 && <IconButton
                   size="2"
                   variant="ghost"
                   color="gray"
@@ -61,20 +62,21 @@ export const ChatSideBar = () => {
                     onDeleteChat?.(chat)
                   }}
                 >
-                  <AiOutlineCloseCircle className="h-4 w-4" />
+                  <AiOutlineCloseCircle className="h-4 w-10" />
                 </IconButton>
+                }
               </Box>
             ))}
           </Flex>
         </ScrollArea>
-        <Box
+        {/* <Box
           width="auto"
           onClick={() => onOpenPersonaPanel?.('chat')}
           className="bg-token-surface-primary active:scale-95 "
         >
           <RiRobot2Line className="h-4 w-4" />
           <Text>Persona Store</Text>
-        </Box>
+        </Box> */}
       </Flex>
     </Flex>
   )

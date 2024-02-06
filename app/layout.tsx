@@ -1,4 +1,3 @@
-import { Analytics } from '@vercel/analytics/react'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import { Header } from '@/components/Header'
@@ -8,14 +7,14 @@ import '@/styles/theme-config.css'
 
 export const metadata = {
   title: {
-    default: 'ChatGPT Lite',
-    template: `%s - ChatGPT Lite`
+    default: 'Oracle OpenSearch',
+    template: `%s - Oracle OpenSearch`
   },
-  description: 'AI assistant powered by ChatGPT',
+  description: 'AI assistant powered by Oracle OpenSearch',
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png'
+    icon: '/favicon-192.avif',
+    shortcut: '/favicon-192.avif',
+    apple: '/favicon-192.avif'
   }
 }
 
@@ -30,7 +29,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
           <Toaster />
         </ThemesProvider>
-        <Analytics />
       </body>
     </html>
   )

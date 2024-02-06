@@ -6,7 +6,8 @@ import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { v4 as uuid } from 'uuid'
 import { ChatGPInstance } from './Chat'
-import { Chat, ChatMessage, Persona } from './interface'
+import { Chat, ChatMessage, OpenSearchConversation, Persona, SearchResult } from './interface'
+import { getConversations } from '../../utils/opensearchUtils'
 
 export const DefaultPersonas: Persona[] = [
   {
@@ -46,6 +47,8 @@ const uploadFiles = async (files: File[]) => {
   return data
 }
 
+
+
 let isInit = false
 
 const useChatHook = () => {
@@ -55,11 +58,9 @@ const useChatHook = () => {
 
   const [_, forceUpdate] = useReducer((x: number) => x + 1, 0)
 
-  const messagesMap = useRef<Map<string, ChatMessage[]>>(new Map<string, ChatMessage[]>())
-
   const chatRef = useRef<ChatGPInstance>(null)
 
-  const currentChatRef = useRef<Chat | undefined>(undefined)
+  const [currentChat, setCurrentChat] = useState<Chat>({ id: uuid(), messages: [] })
 
   const [chatList, setChatList] = useState<Chat[]>([])
 
@@ -76,6 +77,8 @@ const useChatHook = () => {
   const [personaPanelType, setPersonaPanelType] = useState<string>('')
 
   const [toggleSidebar, setToggleSidebar] = useState<boolean>(false)
+
+  const [lastSearchResults, updateLastSearchResults] = useState<SearchResult[]>([{ id: 1, text: "Hello", score: 1.22 }])
 
   const onOpenPersonaPanel = (type: string = 'chat') => {
     setPersonaPanelType(type)
@@ -96,31 +99,31 @@ const useChatHook = () => {
   }
 
   const onChangeChat = useCallback((chat: Chat) => {
-    const oldMessages = chatRef.current?.getConversation() || []
-    const newMessages = messagesMap.current.get(chat.id) || []
-    chatRef.current?.setConversation(newMessages)
-    chatRef.current?.focus()
-    messagesMap.current.set(currentChatRef.current?.id!, oldMessages)
-    currentChatRef.current = chat
-    forceUpdate()
-  }, [])
+    if (chat.id === currentChat.id) {
+      return;
+    }
+    else {
+      setCurrentChat(chat);
+    }
+  }, [currentChat, setCurrentChat])
 
   const onCreateChat = useCallback(
-    (persona: Persona) => {
-      const id = uuid()
+    (chat: Chat) => {
+      setChatList([chat, ...chatList])
+    },
+    [chatList, setChatList]
+  )
+
+  const onStartChat = useCallback(
+    () => {
       const newChat: Chat = {
-        id,
-        persona: persona
+        id: uuid(),
+        messages: []
       }
 
-      setChatList((state) => {
-        return [...state, newChat]
-      })
-
       onChangeChat(newChat)
-      onClosePersonaPanel()
     },
-    [setChatList, onChangeChat, onClosePersonaPanel]
+    [onChangeChat]
   )
 
   const onToggleSidebar = useCallback(() => {
@@ -128,15 +131,15 @@ const useChatHook = () => {
   }, [])
 
   const onDeleteChat = (chat: Chat) => {
+    if (chatList.length < 1) {
+      return;
+    }
+
     const index = chatList.findIndex((item) => item.id === chat.id)
     chatList.splice(index, 1)
     setChatList([...chatList])
-    if (currentChatRef.current?.id === chat.id) {
-      currentChatRef.current = chatList[0]
-    }
-    if (chatList.length === 0) {
-      onOpenPersonaPanel('chat')
-    }
+
+    // Add delete conversation API request
   }
 
   const onCreatePersona = async (values: any) => {
@@ -188,47 +191,48 @@ const useChatHook = () => {
     })
   }
 
-  const saveMessages = (messages: ChatMessage[]) => {
-    if (messages.length > 0) {
-      localStorage.setItem(`ms_${currentChatRef.current?.id}`, JSON.stringify(messages))
-    } else {
-      localStorage.removeItem(`ms_${currentChatRef.current?.id}`)
+  const onLastSearchChange = (searchResults: SearchResult[]) => {
+    updateLastSearchResults(searchResults || []);
+  }
+
+  async function loadAllConversations() {
+    const max_results = 100;
+    let next_token = 0;
+    do {
+      const response = await getConversations(max_results, next_token);
+
+      const conversations = response.conversations;
+
+      if (conversations.length > 0) {
+        const chats = conversations.map((conversation: OpenSearchConversation) => {
+          return {
+            id: conversation.conversation_id,
+            conversationId: conversation.conversation_id,
+            name: conversation.name,
+            messages: []
+          }
+        })
+
+        console.log(conversations);
+
+        setChatList((state) => {
+          return [...state, ...chats]
+        })
+
+        next_token += conversations.length;
+      }
+      else {
+        next_token = -1;
+      }
     }
+    while (next_token != -1);
   }
 
   useEffect(() => {
-    const chatList = (JSON.parse(localStorage.getItem(StorageKeys.Chat_List) || '[]') ||
-      []) as Chat[]
-    const currentChatId = localStorage.getItem(StorageKeys.Chat_Current_ID)
-    if (chatList.length > 0) {
-      const currentChat = chatList.find((chat) => chat.id === currentChatId)
-      setChatList(chatList)
-
-      chatList.forEach((chat) => {
-        const messages = JSON.parse(localStorage.getItem(`ms_${chat?.id}`) || '[]') as ChatMessage[]
-        messagesMap.current.set(chat.id!, messages)
-      })
-
-      onChangeChat(currentChat || chatList[0])
-    } else {
-      onCreateChat(DefaultPersonas[0])
-    }
-
-    return () => {
-      document.body.removeAttribute('style')
-      localStorage.setItem(StorageKeys.Chat_List, JSON.stringify(chatList))
+    if (chatList.length <= 0) {
+      loadAllConversations();
     }
   }, [])
-
-  useEffect(() => {
-    if (currentChatRef.current?.id) {
-      localStorage.setItem(StorageKeys.Chat_Current_ID, currentChatRef.current.id)
-    }
-  }, [currentChatRef.current?.id])
-
-  useEffect(() => {
-    localStorage.setItem(StorageKeys.Chat_List, JSON.stringify(chatList))
-  }, [chatList])
 
   useEffect(() => {
     const loadedPersonas = JSON.parse(localStorage.getItem('Personas') || '[]') as Persona[]
@@ -245,18 +249,11 @@ const useChatHook = () => {
     localStorage.setItem('Personas', JSON.stringify(personas))
   }, [personas])
 
-  useEffect(() => {
-    if (isInit && !openPersonaPanel && chatList.length === 0) {
-      onCreateChat(DefaultPersonas[0])
-    }
-    isInit = true
-  }, [chatList, openPersonaPanel, onCreateChat])
-
   return {
     debug,
     DefaultPersonas,
     chatRef,
-    currentChatRef,
+    currentChat,
     chatList,
     personas,
     editPersona,
@@ -265,19 +262,21 @@ const useChatHook = () => {
     openPersonaPanel,
     personaPanelType,
     toggleSidebar,
+    lastSearchResults,
     onOpenPersonaModal,
     onClosePersonaModal,
+    onStartChat,
     onCreateChat,
     onDeleteChat,
     onChangeChat,
     onCreatePersona,
     onDeletePersona,
     onEditPersona,
-    saveMessages,
     onOpenPersonaPanel,
     onClosePersonaPanel,
     onToggleSidebar,
-    forceUpdate
+    forceUpdate,
+    onLastSearchChange
   }
 }
 
