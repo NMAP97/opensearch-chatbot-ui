@@ -26,7 +26,7 @@ export const ChatSideBar = () => {
 
   return (
     <Flex direction="column" className={cs('chart-side-bar', { show: toggleSidebar })}>
-      <Flex className="p-2 h-full overflow-hidden w-64" direction="column" gap="3">
+      <Flex className="pt-2 h-full overflow-hidden w-64" direction="column" gap="3">
         <Box
           width="auto"
           onClick={() => onStartChat?.()}

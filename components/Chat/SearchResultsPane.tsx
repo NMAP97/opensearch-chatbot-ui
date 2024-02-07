@@ -1,5 +1,5 @@
-import { Flex, Box, ScrollArea, Text, Card } from "@radix-ui/themes";
 import { useContext } from "react";
+import { Flex, Box, ScrollArea, Text, Card, Heading } from "@radix-ui/themes";
 import { ChatContext } from ".";
 
 const SearchResultsPane = () => {
@@ -9,35 +9,35 @@ const SearchResultsPane = () => {
     console.log(lastSearchResults)
 
     return (
-        <Flex direction="column">
-            <Flex className="p-2 h-full overflow-hidden" direction="column" gap="3">
-                <ScrollArea className="flex-1" type="auto" scrollbars="vertical">
-                    <Flex direction="column" gap="3">
-                        {lastSearchResults.map((searchResult, index) => (
-                            // <Box
-                            //     key={searchResult.id}
-                            //     width="auto"
-                            // >
-                            //     <Flex gap="2" align="center">
-                            //         <Text as="div" className="truncate">
-                            //             {searchResult.text}
-                            //         </Text>
-                            //     </Flex>
-                            // </Box>
-                            // 
-                            <Card key={index} variant="ghost">
-                                <Text as="div" size="3">
-                                    {searchResult.text}
+        <Flex className="p-1 h-full overflow-hidden w-full" direction="column">
+            {/* <Flex
+                justify="between"
+                align="center"
+                py="3"
+                px="4"
+                style={{ backgroundColor: 'var(--gray-a2)' }}
+            >
+                <Heading size="4">Search Results</Heading>
+            </Flex> */}
+            <ScrollArea type="auto" scrollbars="vertical">
+                <Flex direction="column">
+                    {lastSearchResults.map((searchResult, index) => (
+                        <Box key={searchResult.id} className="p-4 border-b-2 border-x-gray-300">
+                            <Flex direction="column">
+                                <Text as="div" className="text-pretty" weight="light" size="4">
+                                    {index + 1 + ". " + searchResult.text}
                                 </Text>
-                                <Text as="div" color="gray" size="2">
+                            </Flex>
+                            <Flex direction="column" className="pt-2">
+                                <Text as="label" color="gray" size="2">
                                     score : {searchResult.score}
                                 </Text>
-                            </Card>
-                        ))}
-                    </Flex>
-                </ScrollArea>
-            </Flex>
-        </Flex>
+                            </Flex>
+                        </Box>
+                    ))}
+                </Flex>
+            </ScrollArea >
+        </Flex >
     )
 }
 

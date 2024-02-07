@@ -36,4 +36,10 @@ export interface OpenSearchInteraction {
   response: string
 }
 
+export interface ClusterSettings {
+  endpoint: string,
+  username: string,
+  password: string,
+}
+
 export type ChatRole = 'assistant' | 'user' | 'system'

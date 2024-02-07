@@ -1,15 +1,17 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useContext, useState } from 'react'
 import { HamburgerMenuIcon } from '@radix-ui/react-icons'
 import { Avatar, Flex, Heading, IconButton, Select, Tooltip } from '@radix-ui/themes'
 import cs from 'classnames'
 import NextLink from 'next/link'
 import { usePathname } from 'next/navigation'
 import { FaAdjust, FaGithub, FaMoon, FaRegSun } from 'react-icons/fa'
+import { SiOracle } from 'react-icons/si'
+import { IoSettingsSharp } from 'react-icons/io5'
 import { Link } from './Link'
 import { useTheme } from './Themes'
-import { SiOracle } from 'react-icons/si'
+import ChatContext from './Chat/chatContext'
 
 export interface HeaderProps {
   children?: React.ReactNode
@@ -26,6 +28,9 @@ export const Header = ({ children, gitHubLink, ghost }: HeaderProps) => {
     setShow((state) => !state)
   }, [])
 
+  const { openClusterSettingsModal } =
+    useContext(ChatContext)
+
   return (
     <header
       className={cs('block shadow-sm sticky top-0 dark:shadow-gray-500 py-3 px-4 z-20')}
@@ -41,6 +46,16 @@ export const Header = ({ children, gitHubLink, ghost }: HeaderProps) => {
           </Flex>
         </NextLink>
         <Flex align="center" gap="3" className="ml-auto">
+          <Tooltip content="Cluster Settings">
+            <IconButton
+              size="3"
+              variant="ghost"
+              color="gray"
+              onClick={openClusterSettingsModal}
+            >
+              <IoSettingsSharp width="32" height="32" />
+            </IconButton>
+          </Tooltip>
           <Select.Root value={theme} onValueChange={setTheme}>
             <Select.Trigger radius="full" />
             <Select.Content>
@@ -56,17 +71,6 @@ export const Header = ({ children, gitHubLink, ghost }: HeaderProps) => {
             </Select.Content>
           </Select.Root>
         </Flex>
-        <Tooltip content="Navigation">
-          <IconButton
-            size="3"
-            variant="ghost"
-            color="gray"
-            className="md:hidden"
-            onClick={toggleNavBar}
-          >
-            <HamburgerMenuIcon width="16" height="16" />
-          </IconButton>
-        </Tooltip>
       </Flex>
     </header>
   )

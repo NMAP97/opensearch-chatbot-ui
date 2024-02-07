@@ -1,28 +1,29 @@
-const getOpenSearchApiConfig = () => {
-    const endpoint = process.env.NEXT_PUBLIC_OPENSEARCH_ENDPOINT
-    const username = process.env.NEXT_PUBLIC_OPENSEARCH_USERNAME
-    const password = process.env.NEXT_PUBLIC_OPENSEARCH_PASSWORD
+import { ChatContext, ClusterSettings } from "@/components"
+import { useContext } from "react"
 
-    return { endpoint, username, password }
+const getOpenSearchProxyConfig = () => {
+    const endpoint = process.env.NEXT_PUBLIC_OPENSEARCH_PROXY
+    return { endpoint }
 }
 
-export const getRequest = async (url: string, params: any) => {
+export const getRequest = async (clusterSettings: ClusterSettings, url: string, params: any) => {
     if (params) {
         url = url + '?' + new URLSearchParams(params)
     }
-    return sendRequest(url, 'GET', null)
+    return sendRequest(clusterSettings, url, 'GET', null)
 }
 
 
-export const sendRequest = async (url: string, method: string, data?: any) => {
+export const sendRequest = async (clusterSettings: ClusterSettings, url: string, method: string, data?: any) => {
 
-    let { endpoint, username, password } = getOpenSearchApiConfig();
+    const { endpoint: proxy_endpoint } = getOpenSearchProxyConfig();
 
-    return await fetch(endpoint + url, {
+    return await fetch(proxy_endpoint + url, {
         method: method,
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Basic ' + btoa(`${username}:${password}`)
+            // 'Authorization': 'Basic ' + btoa(`${username}:${password}`)
+            'Destination': clusterSettings.endpoint
         },
         body: data && JSON.stringify(data)
     })

@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { v4 as uuid } from 'uuid'
 import { ChatGPInstance } from './Chat'
-import { Chat, ChatMessage, OpenSearchConversation, Persona, SearchResult } from './interface'
+import { Chat, ChatMessage, ClusterSettings, OpenSearchConversation, Persona, SearchResult } from './interface'
 import { getConversations } from '../../utils/opensearchUtils'
 
 export const DefaultPersonas: Persona[] = [
@@ -29,7 +29,8 @@ export const DefaultPersonas: Persona[] = [
 
 enum StorageKeys {
   Chat_List = 'chatList',
-  Chat_Current_ID = 'chatCurrentID'
+  Chat_Current_ID = 'chatCurrentID',
+  ClusterSettings = 'clusterSettings'
 }
 
 const uploadFiles = async (files: File[]) => {
@@ -46,10 +47,6 @@ const uploadFiles = async (files: File[]) => {
   })
   return data
 }
-
-
-
-let isInit = false
 
 const useChatHook = () => {
   const searchParams = useSearchParams()
@@ -78,7 +75,13 @@ const useChatHook = () => {
 
   const [toggleSidebar, setToggleSidebar] = useState<boolean>(false)
 
-  const [lastSearchResults, updateLastSearchResults] = useState<SearchResult[]>([{ id: 1, text: "Hello", score: 1.22 }])
+  const [toggleSearchResultsPane, setToggleSearchResultsPane] = useState<boolean>(true)
+
+  const [lastSearchResults, updateLastSearchResults] = useState<SearchResult[]>([])
+
+  const [isClusterSettingsModalOpen, setClusterSettingsModalOpen] = useState<boolean>(false)
+
+  const [clusterSettings, setClusterSettings] = useState<ClusterSettings>()
 
   const onOpenPersonaPanel = (type: string = 'chat') => {
     setPersonaPanelType(type)
@@ -98,6 +101,14 @@ const useChatHook = () => {
     setIsOpenPersonaModal(false)
   }
 
+  const openClusterSettingsModal = () => {
+    setClusterSettingsModalOpen(true)
+  }
+
+  const closeClusterSettingsModal = () => {
+    setClusterSettingsModalOpen(false)
+  }
+
   const onChangeChat = useCallback((chat: Chat) => {
     if (chat.id === currentChat.id) {
       return;
@@ -110,8 +121,9 @@ const useChatHook = () => {
   const onCreateChat = useCallback(
     (chat: Chat) => {
       setChatList([chat, ...chatList])
+      updateLastSearchResults([]);
     },
-    [chatList, setChatList]
+    [chatList, setChatList, updateLastSearchResults]
   )
 
   const onStartChat = useCallback(
@@ -128,6 +140,10 @@ const useChatHook = () => {
 
   const onToggleSidebar = useCallback(() => {
     setToggleSidebar((state) => !state)
+  }, [])
+
+  const onToggleSearchResultsPane = useCallback(() => {
+    setToggleSearchResultsPane((state) => !state)
   }, [])
 
   const onDeleteChat = (chat: Chat) => {
@@ -195,44 +211,53 @@ const useChatHook = () => {
     updateLastSearchResults(searchResults || []);
   }
 
+  const onClusterSettingsChange = (settings: ClusterSettings) => {
+    setClusterSettings(settings);
+  }
+
   async function loadAllConversations() {
     const max_results = 100;
     let next_token = 0;
-    do {
-      const response = await getConversations(max_results, next_token);
+    try {
+      do {
+        const response = await getConversations(clusterSettings!, max_results, next_token);
 
-      const conversations = response.conversations;
+        const conversations = response.conversations;
 
-      if (conversations.length > 0) {
-        const chats = conversations.map((conversation: OpenSearchConversation) => {
-          return {
-            id: conversation.conversation_id,
-            conversationId: conversation.conversation_id,
-            name: conversation.name,
-            messages: []
-          }
-        })
+        if (conversations.length > 0) {
+          const chats = conversations.map((conversation: OpenSearchConversation) => {
+            return {
+              id: conversation.conversation_id,
+              conversationId: conversation.conversation_id,
+              name: conversation.name,
+              messages: []
+            }
+          })
 
-        console.log(conversations);
+          setChatList((state) => {
+            return [...state, ...chats]
+          })
 
-        setChatList((state) => {
-          return [...state, ...chats]
-        })
-
-        next_token += conversations.length;
+          next_token += conversations.length;
+        }
+        else {
+          next_token = -1;
+        }
       }
-      else {
-        next_token = -1;
-      }
+      while (next_token != -1);
     }
-    while (next_token != -1);
+    catch (error: any) {
+      toast.error(error.message || "An unknown error occuured while loading conversations");
+    }
   }
 
   useEffect(() => {
-    if (chatList.length <= 0) {
+    if (clusterSettings != null) {
       loadAllConversations();
+      onStartChat();
+      onLastSearchChange([]);
     }
-  }, [])
+  }, [clusterSettings])
 
   useEffect(() => {
     const loadedPersonas = JSON.parse(localStorage.getItem('Personas') || '[]') as Persona[]
@@ -249,6 +274,18 @@ const useChatHook = () => {
     localStorage.setItem('Personas', JSON.stringify(personas))
   }, [personas])
 
+  useEffect(() => {
+    const loadedClusterSettings = localStorage.getItem(StorageKeys.ClusterSettings);
+    setClusterSettings(loadedClusterSettings ? JSON.parse(loadedClusterSettings) : undefined);
+    if (!loadedClusterSettings) {
+      openClusterSettingsModal();
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem(StorageKeys.ClusterSettings, clusterSettings ? JSON.stringify(clusterSettings) : '')
+  }, [clusterSettings])
+
   return {
     debug,
     DefaultPersonas,
@@ -263,6 +300,9 @@ const useChatHook = () => {
     personaPanelType,
     toggleSidebar,
     lastSearchResults,
+    toggleSearchResultsPane,
+    isClusterSettingsModalOpen,
+    clusterSettings,
     onOpenPersonaModal,
     onClosePersonaModal,
     onStartChat,
@@ -276,7 +316,11 @@ const useChatHook = () => {
     onClosePersonaPanel,
     onToggleSidebar,
     forceUpdate,
-    onLastSearchChange
+    onLastSearchChange,
+    onToggleSearchResultsPane,
+    onClusterSettingsChange,
+    openClusterSettingsModal,
+    closeClusterSettingsModal
   }
 }
 

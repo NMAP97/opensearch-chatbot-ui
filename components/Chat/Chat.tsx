@@ -8,14 +8,14 @@ import {
   useRef,
   useState
 } from 'react'
-import { Flex, Heading, IconButton, ScrollArea } from '@radix-ui/themes'
+import { Flex, Heading, IconButton, ScrollArea, Tooltip } from '@radix-ui/themes'
 import clipboard from 'clipboard'
 import ContentEditable from 'react-contenteditable'
 import toast from 'react-hot-toast'
 import { AiOutlineClear, AiOutlineLoading3Quarters, AiOutlineUnorderedList } from 'react-icons/ai'
 import { FiSend } from 'react-icons/fi'
 import ChatContext from './chatContext'
-import { ChatMessage, OpenSearchInteraction } from './interface'
+import { ChatMessage, ClusterSettings, OpenSearchInteraction } from './interface'
 import Message from './Message'
 import * as OpenSearchUtils from '../../utils/opensearchUtils'
 
@@ -30,8 +30,8 @@ export interface ChatGPInstance {
   focus: () => void
 }
 
-const createConversation = async (input: string) => {
-  const json = await OpenSearchUtils.createConversation(input);
+const createConversation = async (clusterSettings: ClusterSettings, input: string) => {
+  const json = await OpenSearchUtils.createConversation(clusterSettings, input);
   return json.conversation_id;
 }
 
@@ -54,28 +54,28 @@ const createConversation = async (input: string) => {
 //   })
 // }
 
-const postQuery = async (conversationId: string, input: string) => {
-  const json = await OpenSearchUtils.searchRAG({
+const postQuery = async (clusterSettings: ClusterSettings, conversationId: string, input: string) => {
+  const json = await OpenSearchUtils.searchRAG(clusterSettings, {
     input,
     conversationId,
-    model: "oci_genai/cohere.command",
-    indexName: "conversation-demo-index",
-    pipelineName: "demo_rag_pipeline",
+    model: process.env.NEXT_PUBLIC_RAG_OPENSEARCH_MODEL_NAME!,
+    indexName: process.env.NEXT_PUBLIC_RAG_OPENSEARCH_INDEX_NAME!,
+    pipelineName: process.env.NEXT_PUBLIC_RAG_OPENSEARCH_PIPELINE_NAME!,
     prompt: ""
   });
 
   return {
-    searchResults: json.hits.hits.map((result: any, id: number) => {
-      id
-      result.text
-      result.score
-    }),
+    searchResults: json.hits.hits.map((result: any, id: number) => ({
+      id,
+      text: result._source.text,
+      score: result._score
+    })),
     answer: json.ext.retrieval_augmented_generation.answer
   };
 }
 
 const Chat = () => {
-  const { debug, currentChat, setCurrentChat, onToggleSidebar, onLastSearchChange, onCreateChat } =
+  const { debug, currentChat, clusterSettings, setCurrentChat, onToggleSearchResultsPane, onLastSearchChange, onCreateChat } =
     useContext(ChatContext)
 
   const [isLoading, setIsLoading] = useState(false)
@@ -100,16 +100,17 @@ const Chat = () => {
       currentChat!.messages = [...currentChat!.messages!, { content: input, role: 'user' }]
       setInput('')
       setIsLoading(true)
+      onLastSearchChange?.([])
       try {
 
         if (!currentChat!.conversationId) {
-          currentChat!.conversationId = await createConversation(input);
+          currentChat!.conversationId = await createConversation(clusterSettings!, input);
           currentChat!.name = input;
           onCreateChat?.(currentChat!)
           setCurrentChat?.(currentChat!)
         }
 
-        const response = await postQuery(currentChat!.conversationId!, input)
+        const response = await postQuery(clusterSettings!, currentChat!.conversationId!, input)
 
         currentChat!.messages = [...currentChat!.messages!, { content: response.answer, role: 'assistant' }]
 
@@ -117,9 +118,12 @@ const Chat = () => {
 
         setIsLoading(false)
       } catch (error: any) {
-        console.error(error)
-        toast.error(error.message)
+        toast.error(error.message || "An Unknown Error occurred while posting the query")
         setIsLoading(false)
+        throw error
+      }
+      finally {
+        setIsLoading(false);
       }
     }
   },
@@ -164,7 +168,7 @@ const Chat = () => {
     setIsLoading(true);
     try {
       do {
-        const response = await OpenSearchUtils.getInteractions(currentChat!.conversationId!, max_results, next_token);
+        const response = await OpenSearchUtils.getInteractions(clusterSettings!, currentChat!.conversationId!, max_results, next_token);
 
         const interactions = response.interactions;
 
@@ -191,7 +195,11 @@ const Chat = () => {
       }
       while (next_token != -1);
     }
-    catch (error) {
+    catch (error: any) {
+      toast.error(error.message || "An Unknown Error occurred while loading interactions")
+      throw error
+    }
+    finally {
       setIsLoading(false);
     }
   }
@@ -212,6 +220,17 @@ const Chat = () => {
         style={{ backgroundColor: 'var(--gray-a2)' }}
       >
         <Heading size="4">{currentChat?.name || 'New chat'}</Heading>
+        <Tooltip content="Toggle search results pane">
+          <IconButton
+            variant="soft"
+            color="gray"
+            size="2"
+            className="rounded-xl"
+            onClick={onToggleSearchResultsPane}
+          >
+            <AiOutlineUnorderedList className="h-4 w-4" />
+          </IconButton>
+        </Tooltip>
       </Flex>
       <ScrollArea
         className="flex-1 px-4"
@@ -268,16 +287,6 @@ const Chat = () => {
               onClick={sendMessage}
             >
               <FiSend className="h-4 w-4" />
-            </IconButton>
-            <IconButton
-              variant="soft"
-              color="gray"
-              size="2"
-              className="rounded-xl"
-              disabled={isLoading}
-              onClick={onToggleSidebar}
-            >
-              <AiOutlineUnorderedList className="h-4 w-4" />
             </IconButton>
           </Flex>
         </Flex>

@@ -25,9 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemesProvider>
-          <Header />
           {children}
-          <Toaster />
+          {/* <Footer /> */}
+          <Toaster position="bottom-right" />
         </ThemesProvider>
       </body>
     </html>

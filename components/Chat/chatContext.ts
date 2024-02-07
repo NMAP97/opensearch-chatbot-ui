@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, MutableRefObject } from 'react'
-import { Chat, ChatMessage, Persona, SearchResult } from './interface'
+import { Chat, ChatMessage, ClusterSettings, Persona, SearchResult } from './interface'
 
 const ChatContext = createContext<{
   debug?: boolean
@@ -15,7 +15,10 @@ const ChatContext = createContext<{
   personaModalLoading?: boolean
   openPersonaPanel?: boolean
   toggleSidebar?: boolean
-  lastSearchResults: SearchResult[]
+  lastSearchResults: SearchResult[],
+  toggleSearchResultsPane: boolean,
+  clusterSettings?: ClusterSettings
+  isClusterSettingsModalOpen: boolean
   onOpenPersonaModal?: () => void
   onClosePersonaModal?: () => void
   setCurrentChat?: (chat: Chat) => void
@@ -31,12 +34,18 @@ const ChatContext = createContext<{
   onToggleSidebar?: () => void
   forceUpdate?: () => void
   onLastSearchChange?: (searchResults: SearchResult[]) => void
+  onToggleSearchResultsPane?: () => void
+  onClusterSettingsChange?: (settings: ClusterSettings) => void
+  openClusterSettingsModal?: () => void
+  closeClusterSettingsModal?: () => void
 }>({
   personaPanelType: 'chat',
   DefaultPersonas: [],
   chatList: [],
   personas: [],
-  lastSearchResults: []
+  lastSearchResults: [],
+  toggleSearchResultsPane: false,
+  isClusterSettingsModalOpen: false
 })
 
 export default ChatContext
