@@ -129,15 +129,15 @@ const Chat = () => {
   },
     [input, currentChat, isLoading, debug])
 
-  const handleKeypress = useCallback(
-    (e: any) => {
-      if (e.keyCode == 13 && !e.shiftKey) {
-        sendMessage(e)
-        e.preventDefault()
-      }
-    },
-    [sendMessage]
-  )
+  // const handleKeypress = useCallback(
+  //   (e: any) => {
+  //     if (e.keyCode == 13 && !e.shiftKey) {
+  //       sendMessage(e)
+  //       e.preventDefault()
+  //     }
+  //   },
+  //   [sendMessage]
+  // )
 
   useEffect(() => {
     if (textAreaRef.current) {
@@ -260,7 +260,7 @@ const Chat = () => {
                 setInput(e.target.value.replace(HTML_REGULAR, ''));
               }}
               onKeyDown={(e) => {
-                handleKeypress(e)
+                // handleKeypress(e)
               }}
               placeholder="Enter a prompt here"
             />
