@@ -59,9 +59,9 @@ export const Header = ({ children, gitHubLink, ghost }: HeaderProps) => {
           <Select.Root value={theme} onValueChange={setTheme}>
             <Select.Trigger radius="full" />
             <Select.Content>
-              {/* <Select.Item value="light">
+              <Select.Item value="light">
                 <FaRegSun />
-              </Select.Item> */}
+              </Select.Item>
               <Select.Item value="dark">
                 <FaMoon />
               </Select.Item>

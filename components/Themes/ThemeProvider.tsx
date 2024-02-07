@@ -17,7 +17,7 @@ export const ThemeProvider = (props: ThemeProviderProps) => {
 const Theme = ({
   forcedTheme,
   disableTransitionOnChange = false,
-  enableSystem = true,
+  enableSystem = false,
   enableColorScheme = true,
   storageKey = 'theme',
   themes = ['light', 'dark'],
