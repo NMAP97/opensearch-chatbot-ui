@@ -225,7 +225,7 @@ const Chat = () => {
         px="4"
         style={{ backgroundColor: 'var(--gray-a2)' }}
       >
-        <Heading size="4">{currentChat?.name || 'New chat'}</Heading>
+        <Heading size="4" className='truncate'>{currentChat?.name || 'New chat'}</Heading>
         <Tooltip content="Toggle search results pane">
           <IconButton
             variant="soft"
