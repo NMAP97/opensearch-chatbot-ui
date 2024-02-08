@@ -26,6 +26,7 @@ const ChatContext = createContext<{
   setCurrentChat?: (chat: Chat) => void
   onCreatePersona?: (persona: Persona) => void
   onDeleteChat?: (chat: Chat) => void
+  onDeleteAllChat?: () => void
   onDeletePersona?: (persona: Persona) => void
   onEditPersona?: (persona: Persona) => void
   onStartChat?: () => void

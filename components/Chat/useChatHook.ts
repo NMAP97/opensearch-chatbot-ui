@@ -161,6 +161,38 @@ const useChatHook = () => {
     setToggleSearchResultsPane((state) => !state)
   }, [])
 
+  async function deleteSingleConversation(chat: Chat) {
+    try {
+      await deleteConversation(clusterSettings!, chat.conversationId!);
+
+      const index = chatList.findIndex((item) => item.id === chat.id)
+      chatList.splice(index, 1)
+      setChatList([...chatList])
+
+      if (currentChat?.id == chat.id) {
+        onStartChat();
+      }
+
+      toast.success("Conversation deleted")
+    }
+    catch (err: any) {
+      toast.error(err.message || "An unknown error occurred while deleting the conversation");
+    }
+  }
+
+  const onDeleteAllChat = () => {
+
+    openAlertDialogModal({
+      title: "Delete All Conversations",
+      description: "Are you sure want to delete all the older conversations?",
+      okButtonText: "Delete",
+      cancelButtonText: "Cancel",
+      onSuccess: async () => {
+        chatList.filter((chat, index) => chat.conversationId).forEach(deleteSingleConversation)
+      }
+    })
+  }
+
   const onDeleteChat = (chat: Chat) => {
 
     openAlertDialogModal({
@@ -168,25 +200,8 @@ const useChatHook = () => {
       description: "Are you sure want to delete the conversation?",
       okButtonText: "Delete",
       cancelButtonText: "Cancel",
-      onSuccess: async () => {
-        try {
-          await deleteConversation(clusterSettings!, chat.conversationId!);
-
-          const index = chatList.findIndex((item) => item.id === chat.id)
-          chatList.splice(index, 1)
-          setChatList([...chatList])
-
-          if (currentChat?.id == chat.id) {
-            onStartChat();
-          }
-
-          toast.success("Conversation deleted")
-        }
-        catch (err: any) {
-          toast.error(err.message || "An unknown error occurred while deleting the conversation");
-        }
-      }
-    });
+      onSuccess: async () => deleteSingleConversation(chat)
+    })
   }
 
   const onCreatePersona = async (values: any) => {
@@ -342,6 +357,7 @@ const useChatHook = () => {
     onStartChat,
     onCreateChat,
     onDeleteChat,
+    onDeleteAllChat,
     onChangeChat,
     onCreatePersona,
     onDeletePersona,
