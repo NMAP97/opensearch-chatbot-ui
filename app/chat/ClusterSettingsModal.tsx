@@ -21,8 +21,8 @@ const ClusterSettingsModal = () => {
     useEffect(() => {
         if (clusterSettings) {
             setValue('endpoint', clusterSettings.endpoint, { shouldTouch: true })
-            // setValue('username', clusterSettings.username, { shouldTouch: true })
-            // setValue('password', clusterSettings.password, { shouldTouch: true })
+            // setValue('context_size', clusterSettings.context_size, { shouldTouch: true })
+            // setValue('interaction_size', clusterSettings.interaction_size, { shouldTouch: true })
         }
     }, [clusterSettings, setValue])
 
@@ -36,8 +36,12 @@ const ClusterSettingsModal = () => {
                 <form onSubmit={formSubmit}>
                     <Flex direction="column" gap="3">
                         <Text as='label'>Endpoint</Text>
-                        <TextField.Input max="5" placeholder="please enter a valid http url" {...register('endpoint', { required: true })} />
-                        {/* <TextField.Input placeholder="User Name" {...register('username', { required: false })} />
+                        <TextField.Input type="url" placeholder="please enter a valid http url" {...register('endpoint', { required: true })} />
+                        {/* <Text as='label'>Context Size</Text>
+                        <TextField.Input type="number" min="1" placeholder="please enter a valid number" {...register('context_size', { required: true })} />
+                        <Text as='label'>Interaction Size</Text>
+                        <TextField.Input type="number" min="1" placeholder="please enter a valid number" {...register('interaction_size', { required: true })} />
+                        <TextField.Input placeholder="User Name" {...register('username', { required: false })} />
                         <TextField.Input type="password" placeholder="Password" {...register('password', { required: false })} /> */}
                     </Flex>
                     <Flex gap="3" mt="4" justify="end">

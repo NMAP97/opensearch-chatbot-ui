@@ -24,6 +24,12 @@ import './index.scss'
 const HTML_REGULAR =
   /<(?!img|table|\/table|thead|\/thead|tbody|\/tbody|tr|\/tr|td|\/td|th|\/th|br|\/br).*?>/gi
 
+function htmlToText(html: string) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  return div.innerText;
+}
+
 export interface ChatGPInstance {
   setConversation: (messages: ChatMessage[]) => void
   getConversation: () => ChatMessage[]
@@ -257,7 +263,7 @@ const Chat = () => {
               html={input}
               disabled={isLoading}
               onChange={(e) => {
-                setInput(e.target.value.replace(HTML_REGULAR, ''));
+                setInput(htmlToText(e.target.value));
               }}
               onKeyDown={(e) => {
                 // handleKeypress(e)

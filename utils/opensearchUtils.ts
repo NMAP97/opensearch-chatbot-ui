@@ -109,3 +109,18 @@ export async function getInteractions(clusterSettings: ClusterSettings, conversa
         throwError(json)
     }
 }
+
+export async function deleteConversation(clusterSettings: ClusterSettings, conversationId: string) {
+    const response = await sendRequest(clusterSettings, '/_plugins/_ml/memory/conversation/' + conversationId, 'DELETE');
+
+    const status = response.status;
+
+    const json = await response.json();
+
+    if (status == 200) {
+        return json;
+    }
+    else {
+        throwError(json)
+    }
+}

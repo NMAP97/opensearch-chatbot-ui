@@ -6,8 +6,8 @@ import { useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { v4 as uuid } from 'uuid'
 import { ChatGPInstance } from './Chat'
-import { Chat, ChatMessage, ClusterSettings, OpenSearchConversation, Persona, SearchResult } from './interface'
-import { getConversations } from '../../utils/opensearchUtils'
+import { AlertDialogModalSettings, Chat, ChatMessage, ClusterSettings, OpenSearchConversation, Persona, SearchResult } from './interface'
+import { deleteConversation, getConversations } from '../../utils/opensearchUtils'
 
 export const DefaultPersonas: Persona[] = [
   {
@@ -83,6 +83,10 @@ const useChatHook = () => {
 
   const [clusterSettings, setClusterSettings] = useState<ClusterSettings>()
 
+  const [isAlertDialogModalOpen, setAlertDialogModalOpen] = useState<boolean>(false)
+
+  const [alertDialogModalSettings, setAlertDialogModalSettings] = useState<AlertDialogModalSettings>()
+
   const onOpenPersonaPanel = (type: string = 'chat') => {
     setPersonaPanelType(type)
     setOpenPersonaPanel(true)
@@ -109,12 +113,23 @@ const useChatHook = () => {
     setClusterSettingsModalOpen(false)
   }
 
+  const openAlertDialogModal = (settings: AlertDialogModalSettings) => {
+    setAlertDialogModalOpen(true)
+    setAlertDialogModalSettings(settings)
+  }
+
+  const closeAlertDialogModal = () => {
+    setAlertDialogModalOpen(false)
+    // setAlertDialogModalSettings(undefined);
+  }
+
   const onChangeChat = useCallback((chat: Chat) => {
     if (chat.id === currentChat.id) {
       return;
     }
     else {
       setCurrentChat(chat);
+      updateLastSearchResults([]);
     }
   }, [currentChat, setCurrentChat])
 
@@ -147,15 +162,31 @@ const useChatHook = () => {
   }, [])
 
   const onDeleteChat = (chat: Chat) => {
-    if (chatList.length < 1) {
-      return;
-    }
 
-    const index = chatList.findIndex((item) => item.id === chat.id)
-    chatList.splice(index, 1)
-    setChatList([...chatList])
+    openAlertDialogModal({
+      title: "Delete Conversation",
+      description: "Are you sure want to delete the conversation?",
+      okButtonText: "Delete",
+      cancelButtonText: "Cancel",
+      onSuccess: async () => {
+        try {
+          await deleteConversation(clusterSettings!, chat.conversationId!);
 
-    // Add delete conversation API request
+          const index = chatList.findIndex((item) => item.id === chat.id)
+          chatList.splice(index, 1)
+          setChatList([...chatList])
+
+          if (currentChat?.id == chat.id) {
+            onStartChat();
+          }
+
+          toast.success("Conversation deleted")
+        }
+        catch (err: any) {
+          toast.error(err.message || "An unknown error occurred while deleting the conversation");
+        }
+      }
+    });
   }
 
   const onCreatePersona = async (values: any) => {
@@ -253,11 +284,12 @@ const useChatHook = () => {
 
   useEffect(() => {
     if (clusterSettings != null) {
+      setChatList([]);
       loadAllConversations();
       onStartChat();
       onLastSearchChange([]);
     }
-  }, [clusterSettings])
+  }, [clusterSettings?.endpoint])
 
   useEffect(() => {
     const loadedPersonas = JSON.parse(localStorage.getItem('Personas') || '[]') as Persona[]
@@ -303,6 +335,8 @@ const useChatHook = () => {
     toggleSearchResultsPane,
     isClusterSettingsModalOpen,
     clusterSettings,
+    isAlertDialogModalOpen,
+    alertDialogModalSettings,
     onOpenPersonaModal,
     onClosePersonaModal,
     onStartChat,
@@ -320,7 +354,8 @@ const useChatHook = () => {
     onToggleSearchResultsPane,
     onClusterSettingsChange,
     openClusterSettingsModal,
-    closeClusterSettingsModal
+    closeClusterSettingsModal,
+    closeAlertDialogModal,
   }
 }
 

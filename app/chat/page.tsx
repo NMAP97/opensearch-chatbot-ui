@@ -5,6 +5,7 @@ import { Chat, ChatContext, ChatSideBar, PersonaPanel, useChatHook } from '@/com
 import SearchResultsPane from '@/components/Chat/SearchResultsPane'
 import ClusterSettingsModal from './ClusterSettingsModal'
 import { Header } from '@/components/Header'
+import AlertDialogModal from './AlertDialogModal'
 
 const ChatPage = () => {
   const provider = useChatHook()
@@ -23,6 +24,7 @@ const ChatPage = () => {
           </div>}
       </Flex>
       <ClusterSettingsModal />
+      {provider.isAlertDialogModalOpen && <AlertDialogModal />}
     </ChatContext.Provider>
   )
 }

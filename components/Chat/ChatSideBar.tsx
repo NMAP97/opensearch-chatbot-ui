@@ -52,7 +52,7 @@ export const ChatSideBar = () => {
                     {chat.name}
                   </Text>
                 </Flex>
-                {chatList.length > 1 && <IconButton
+                <IconButton
                   size="2"
                   variant="ghost"
                   color="gray"
@@ -64,7 +64,6 @@ export const ChatSideBar = () => {
                 >
                   <AiOutlineCloseCircle className="h-4 w-10" />
                 </IconButton>
-                }
               </Box>
             ))}
           </Flex>

@@ -42,4 +42,12 @@ export interface ClusterSettings {
   password: string,
 }
 
+export interface AlertDialogModalSettings {
+  title: string,
+  description: string,
+  okButtonText: string,
+  cancelButtonText: string,
+  onSuccess: () => void
+}
+
 export type ChatRole = 'assistant' | 'user' | 'system'
