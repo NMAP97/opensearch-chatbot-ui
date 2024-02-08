@@ -22,7 +22,7 @@ const Message = (props: MessageProps) => {
         size="2"
         radius="full"
       />
-      <div className="flex-1 pt-1 text-pretty">
+      <div className="flex-1 pt-1 text-pretty max-w-screen-sm">
         {isUser ? (
           <div
             className="userMessage"
