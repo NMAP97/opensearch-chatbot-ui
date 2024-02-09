@@ -40,7 +40,7 @@ export const ChatSideBar = () => {
             onClick={() => onDeleteAllChat?.()}
             className="pt-1"
           >
-            <Tooltip content="Delete all convesations">
+            <Tooltip content="Delete all conversations">
               <IconButton
                 variant="soft"
                 color="red"

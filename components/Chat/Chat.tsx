@@ -26,7 +26,7 @@ const HTML_REGULAR =
 
 function htmlToText(html: string) {
   const div = document.createElement('div');
-  div.innerHTML = html;
+  div.innerHTML = html || '';
   return div.innerText;
 }
 
@@ -40,25 +40,6 @@ const createConversation = async (clusterSettings: ClusterSettings, input: strin
   const json = await OpenSearchUtils.createConversation(clusterSettings, input);
   return json.conversation_id;
 }
-
-// const postChatOrQuestion = async (chat: Chat, messages: any[], input: string) => {
-//   const url = '/api/chat'
-
-//   const data = {
-//     id: chat.id,
-//     prompt: chat?.persona?.prompt,
-//     messages: [...messages!],
-//     input
-//   }
-
-//   return await fetch(url, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json'
-//     },
-//     body: JSON.stringify(data)
-//   })
-// }
 
 const postQuery = async (clusterSettings: ClusterSettings, conversationId: string, input: string) => {
   const json = await OpenSearchUtils.searchRAG(clusterSettings, {
@@ -92,7 +73,7 @@ const Chat = () => {
 
   const bottomOfChatRef = useRef<HTMLDivElement>(null)
 
-  const sendMessage = useCallback(async (e: any) => {
+  const sendMessage = async (e: any) => {
     if (!isLoading) {
       e.preventDefault();
 
@@ -113,37 +94,32 @@ const Chat = () => {
           currentChat!.conversationId = await createConversation(clusterSettings!, input);
           currentChat!.name = input;
           onCreateChat?.(currentChat!)
-          setCurrentChat?.(currentChat!)
         }
+
+        setCurrentChat?.(currentChat!)
 
         const response = await postQuery(clusterSettings!, currentChat!.conversationId!, input)
 
         currentChat!.messages = [...currentChat!.messages!, { content: response.answer, role: 'assistant' }]
 
+        setCurrentChat?.(currentChat!)
         onLastSearchChange?.(response.searchResults)
-
-        setIsLoading(false)
       } catch (error: any) {
         toast.error(error.message || "An Unknown Error occurred while posting the query")
-        setIsLoading(false)
         throw error
       }
       finally {
         setIsLoading(false);
       }
     }
-  },
-    [input, currentChat, isLoading, debug])
+  }
 
-  // const handleKeypress = useCallback(
-  //   (e: any) => {
-  //     if (e.keyCode == 13 && !e.shiftKey) {
-  //       sendMessage(e)
-  //       e.preventDefault()
-  //     }
-  //   },
-  //   [sendMessage]
-  // )
+  const handleKeypress = (e: any) => {
+    if (e.keyCode == 13 && !e.shiftKey) {
+      sendMessage(e)
+      e.preventDefault()
+    }
+  }
 
   useEffect(() => {
     if (textAreaRef.current) {
@@ -216,6 +192,15 @@ const Chat = () => {
     }
   }, [currentChat])
 
+  useEffect(() => {
+    if (textAreaRef.current) {
+      textAreaRef.current.addEventListener("keydown", handleKeypress);
+
+      return () => textAreaRef.current?.removeEventListener("keydown", handleKeypress);
+    }
+
+  }, [textAreaRef.current, handleKeypress])
+
   return (
     <Flex direction="column" height="100%" className="relative" gap="3" style={{ 'borderRight': '3px solid var(--gray-a4)' }}>
       <Flex
@@ -259,14 +244,11 @@ const Chat = () => {
                 maxHeight: '200px',
                 overflowY: 'auto'
               }}
-              className="rt-TextAreaInput text-base"
+              className="rt-TextAreaInput text-base max-w-screen-sm"
               html={input}
               disabled={isLoading}
               onChange={(e) => {
                 setInput(htmlToText(e.target.value));
-              }}
-              onKeyDown={(e) => {
-                // handleKeypress(e)
               }}
               placeholder="Enter a prompt here"
             />
